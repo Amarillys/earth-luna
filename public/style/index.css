@@ -1,0 +1,32 @@
+body {
+    margin: 0;
+    position: relative;
+}
+
+.slider-panel-container {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    color: #eee;
+}
+
+.slider-containder {
+    padding-right: 0.5rem;
+}
+
+.slider-panel {
+    width: 200px;
+    display: flex;
+}
+
+#intro {
+    position: absolute;
+    top: 0.3rem;
+    left: 2rem;
+    color: rgba(233, 233, 233, 0.9);
+    font-size: 1.2rem;
+}
+
+.mono {
+    font-family: monospace;
+}

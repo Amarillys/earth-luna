@@ -1,0 +1,38 @@
+.slider-containder {
+    width: 100%;
+    height: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.slider {
+    opacity: 0.75;
+    width: 100%;
+    height: 100%;
+    -webkit-appearance: none;
+    transition: opacity 0.2s;
+    border-radius: 8px;
+    background-color: rgba(230, 230, 230, 0.7);
+    outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 0.8rem;
+    background: rgb(202, 228, 203);
+    cursor: pointer;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+#panel::after {
+    color: rgba(248, 248, 248, 0.9);
+    position: absolute;
+    left: 105%;
+    top: 0px;
+    font-size: 1.2rem;
+}
