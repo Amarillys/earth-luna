@@ -1,3 +1,5 @@
+import { floor } from './lib'
+
 export default class Sphere {
     points: Array<number> = []
     indexes: Array<number> = []
@@ -45,10 +47,4 @@ export default class Sphere {
             this.indexes.push(widthSegments * (m + 1))
         }
     }
-}
-
-function floor(num: number) {
-    if (Math.abs(num) < 0.001)
-        return 0
-    return num
 }
