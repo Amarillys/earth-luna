@@ -1,11 +1,12 @@
 /* eslint-env node */
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const copyWebpackPlugin = require('copy-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const path = require('path');
 const env = process.env.NODE_ENV;
 
 module.exports = {
-    mode: "development",
+    mode: env,
     entry: "./index.ts",
     output: {
         filename: "bundle.js",
@@ -22,13 +23,16 @@ module.exports = {
     },
 
     resolve: {
-        extensions: ['.ts', '.js', '.json']
+        extensions: ['.ts', '.js', '.json', '.scss']
     },
 
     module: {
         rules: [{
             test: /\.ts$/,
             use: 'ts-loader'
+        }, {
+            test: /\.scss$/,
+            use: ['style-loader', 'css-loader', 'sass-loader']
         }],
     },
 
@@ -38,6 +42,9 @@ module.exports = {
         new copyWebpackPlugin([{
             from: `${__dirname}/public`,
             to: `./`
-        }])
+        }]),
     ],
+    optimization: {
+        minimizer: [new TerserPlugin()]
+    }
 };

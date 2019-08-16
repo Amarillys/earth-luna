@@ -8,7 +8,7 @@ export function getPointOfCircle(value: number, cycle: number) {
     }
 }
 
-export function floor(num: number, accurate: number = 0.001) {
+export function floor(num: number, accurate: number = 0.0000001) {
     if (Math.abs(num) < accurate)
         return 0
     return num

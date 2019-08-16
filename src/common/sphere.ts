@@ -1,8 +1,9 @@
 import { floor } from './lib'
 
-export default class Sphere {
+export class Sphere {
     points: Array<number> = []
     indexes: Array<number> = []
+    colors: Array<number> = []
     core: Array<number>
     length: number
     widthSegments: number
@@ -19,7 +20,7 @@ export default class Sphere {
         }
         // push points
         for (let i = 0; i < this.widthSegments; ++i)
-            this.points.push(core[0], this.length, core[2], 1.0)
+            this.points.push(core[0], core[1] + this.length, core[2], 1.0)
         for (let m = 1; m < this.heightSegments; ++m) {
             let yAngle = Math.PI / this.heightSegments * m
             let y =  floor(Math.cos(yAngle) * length)
@@ -30,7 +31,7 @@ export default class Sphere {
             }
         }
         for (let i = 0; i < widthSegments; ++i) {
-            this.points.push(core[0], -length, core[2], 1.0)
+            this.points.push(core[0], core[1] - length, core[2], 1.0)
         }
 
         // push indexes
@@ -47,4 +48,22 @@ export default class Sphere {
             this.indexes.push(widthSegments * (m + 1))
         }
     }
+}
+
+export function generateSphereLine(widthSegments: number, heightSegments: number) {
+    let indexes = []
+    for (let h = 1; h <= heightSegments; ++h) {
+        let circle = widthSegments * h
+        let lastCircle = circle - widthSegments
+        indexes.push(circle)
+        for (let w = 0; w < widthSegments; ++w) {
+            indexes.push(lastCircle + w, circle + w)
+        }
+        indexes.push(lastCircle)
+        for (let w = 0; w < widthSegments; ++w) {
+            indexes.push(circle + w)
+        }
+        indexes.push(circle)
+    }
+    return indexes
 }
