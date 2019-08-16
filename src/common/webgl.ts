@@ -1,8 +1,5 @@
 export const GLContext = WebGLRenderingContext
 export type InputType = 'attribute' | 'uniform' | 'varying' | 'index'
-export type ValueType = Int8ArrayConstructor | Uint8ArrayConstructor | Int16ArrayConstructor
-| Uint16ArrayConstructor | Int32ArrayConstructor
-| Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor
 
 export class InputData {
   name: string
@@ -10,7 +7,6 @@ export class InputData {
   value: any
   type: string
   inputType: InputType
-  valueType: ValueType
   indexArray: boolean
   drawType: number = GLContext.STATIC_DRAW
   options = {
@@ -19,10 +15,9 @@ export class InputData {
     normalize: false,
     bindType: GLContext.FLOAT
   }
-  constructor(name: string, value: any, valueType: ValueType, indexArray = false) {
+  constructor(name: string, value: any, indexArray = false) {
     this.name = name
     this.value = value
-    this.valueType = valueType
     this.indexArray = indexArray
   }
 }
@@ -89,33 +84,24 @@ export class WebGL {
       if (input.inputType === 'attribute') {
         input.buffer = this.gl.createBuffer()
         this.gl.bindBuffer(GLContext.ARRAY_BUFFER, input.buffer)
-        this.gl.bufferData(GLContext.ARRAY_BUFFER, new input.valueType(
-          input.value, this.getSize(input.type)), input.drawType)
+        this.gl.bufferData(GLContext.ARRAY_BUFFER, input.value, input.drawType)
 
-        let options = input.options
-        options.bindType = input.valueType.name.includes('Float') ? GLContext.FLOAT : GLContext.BYTE
         let location = this.gl.getAttribLocation(this.shaderProgram, input.name)
-        this.gl.vertexAttribPointer(location, this.getSize(input.type), options.bindType, options.normalize, 0, 0);
+        this.gl.vertexAttribPointer(location, this.getSize(input.type), GLContext.FLOAT, input.options.normalize, 0, 0);
         this.gl.enableVertexAttribArray(location);
       } else if (input.inputType === 'uniform') {
-        let data = null
-        switch (input.valueType) {
-          case Float32Array:
-            data = new Float32Array(input.value)
-            break
-        }
         switch (input.type) {
           case 'vec4':
-              this.gl.uniform4fv(this.gl.getUniformLocation(this.shaderProgram, input.name), data);
+              this.gl.uniform4fv(this.gl.getUniformLocation(this.shaderProgram, input.name), input.value);
               break;
           case 'mat4':
-              this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.shaderProgram, input.name), false, data);
+              this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.shaderProgram, input.name), false, input.value);
               break;
         }
       } else if (input.name === 'index') {
         input.buffer = this.gl.createBuffer()
         this.gl.bindBuffer(GLContext.ELEMENT_ARRAY_BUFFER, input.buffer)
-        this.gl.bufferData(GLContext.ELEMENT_ARRAY_BUFFER, new Uint16Array(input.value), input.drawType)
+        this.gl.bufferData(GLContext.ELEMENT_ARRAY_BUFFER, input.value, input.drawType)
       }
     })
   }

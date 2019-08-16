@@ -1,8 +1,9 @@
 import * as mat4 from 'gl-matrix/esm/mat4'
 // import { mat4 } from 'gl-matrix'
 import { WebGL as WebGLProgram, InputData, GLContext } from './common/webgl'
-import Circle from './common/circle'
-import { Sphere, generateSphereLine } from './common/sphere'
+import generateCircle from './common/circle'
+import Cache from './component/cache'
+import { generateSphere, generateSphereLine } from './common/sphere'
 
 const vsSource = `
   attribute vec4 vertexPosition;
@@ -27,6 +28,7 @@ const fsSource = `
   }
 `;
 
+const cache = new Cache()
 export function draw(gl: WebGLRenderingContext, options) {
   gl.enable(GLContext.BLEND)
   gl.blendFunc(GLContext.SRC_ALPHA, GLContext.ONE_MINUS_SRC_ALPHA)
@@ -34,14 +36,14 @@ export function draw(gl: WebGLRenderingContext, options) {
 
   let earthProgram = new WebGLProgram(gl)
   earthProgram.initShader(vsSource, fsSource)
-  function drawEarth(transformMatrix: mat4, viewMatrix: mat4, earth) {
-    let position = new InputData('vertexPosition', earth.points, Float32Array)
-    let index = new InputData('index', earth.indexes, Float32Array, true)
-    let color = new InputData('vertexColor', earth.colors, Float32Array)
+  function drawEarth(transformMatrix: mat4, viewMatrix: mat4, earth, colors) {
+    let position = new InputData('vertexPosition', earth.points)
+    let index = new InputData('index', earth.indexes, true)
+    let color = new InputData('vertexColor', colors)
 
     mat4.rotate(transformMatrix, transformMatrix, timing * 0.005, [1, 1, 1])
-    let transform = new InputData('transFormMatrix', transformMatrix ,Float32Array)
-    let view = new InputData('viewMatrix', viewMatrix, Float32Array);
+    let transform = new InputData('transFormMatrix', transformMatrix)
+    let view = new InputData('viewMatrix', viewMatrix);
     earthProgram.draw([position, color, transform, view, index], (gl: WebGLRenderingContext) => {
       gl.drawElements(GLContext.TRIANGLE_STRIP, earth.indexes.length, GLContext.UNSIGNED_SHORT, 0)
     })
@@ -50,13 +52,13 @@ export function draw(gl: WebGLRenderingContext, options) {
   let earthLineProgram = new WebGLProgram(gl)
   earthLineProgram.initShader(vsSource, fsSource)
   function drawEarthLine(transformMatrix: mat4, viewMatrix: mat4, earthLine) {
-    let position = new InputData('vertexPosition', earthLine.points, Float32Array)
-    let index = new InputData('index', earthLine.indexes, Float32Array, true)
-    let color = new InputData('vertexColor', earthLine.colors, Float32Array)
+    let position = new InputData('vertexPosition', earthLine.points)
+    let index = new InputData('index', earthLine.indexes, true)
+    let color = new InputData('vertexColor', earthLine.colors)
 
     mat4.rotate(transformMatrix, transformMatrix, timing * 0.005, [1, 1, 1])
-    let transform = new InputData('transFormMatrix', transformMatrix ,Float32Array)
-    let view = new InputData('viewMatrix', viewMatrix, Float32Array);
+    let transform = new InputData('transFormMatrix', transformMatrix)
+    let view = new InputData('viewMatrix', viewMatrix);
     earthProgram.draw([position, color, transform, view, index], (gl: WebGLRenderingContext) => {
       gl.drawElements(GLContext.LINE_LOOP, earthLine.indexes.length, GLContext.UNSIGNED_SHORT, 0)
     })
@@ -64,14 +66,14 @@ export function draw(gl: WebGLRenderingContext, options) {
 
   let moonProgram = new WebGLProgram(gl)
   moonProgram.initShader(vsSource, fsSource)
-  function drawMoon(transformMatrix: mat4, viewMatrix: mat4, moon) {
-    let position = new InputData('vertexPosition', moon.points, Float32Array)
-    let index = new InputData('index', moon.indexes, Float32Array, true)
-    let color = new InputData('vertexColor', moon.colors, Float32Array)
+  function drawMoon(transformMatrix: mat4, viewMatrix: mat4, moon, colors) {
+    let position = new InputData('vertexPosition', moon.points)
+    let index = new InputData('index', moon.indexes, true)
+    let color = new InputData('vertexColor', colors)
 
     mat4.rotate(transformMatrix, transformMatrix, timing * 0.001, [0, 0, 1])
-    let transform = new InputData('transFormMatrix', transformMatrix ,Float32Array)
-    let view = new InputData('viewMatrix', viewMatrix, Float32Array);
+    let transform = new InputData('transFormMatrix', transformMatrix)
+    let view = new InputData('viewMatrix', viewMatrix);
     moonProgram.draw([position, color, transform, view, index], (gl: WebGLRenderingContext) => {
       gl.drawElements(GLContext.TRIANGLE_STRIP, moon.indexes.length, GLContext.UNSIGNED_SHORT, 0)
     })
@@ -79,19 +81,16 @@ export function draw(gl: WebGLRenderingContext, options) {
 
   let traceProgram = new WebGLProgram(gl)
   traceProgram.initShader(vsSource, fsSource)
-  const trace = new Circle([0.0, 0.0, 0.0], 0.961, 128)
-  const traceColor = [];
-    for (let i = 0, len = trace.points.length / 4; i < len; ++i) {
-      traceColor.push(0.95, 0.95, 0.95, 0.98)
-  }
+  const trace = generateCircle([0.0, 0.0, 0.0], 0.961, 128)
+  const traceColor = new Float32Array(new Array(trace.points.length).fill(0.95))
   function drawTrace(transformMatrix: mat4, viewMatrix: mat4) {
-    let position = new InputData('vertexPosition', trace.points, Float32Array)
-    let color = new InputData('vertexColor', traceColor, Float32Array)
+    let position = new InputData('vertexPosition', trace.points)
+    let color = new InputData('vertexColor', traceColor)
 
-    let transform = new InputData('transFormMatrix', transformMatrix ,Float32Array)
-    let view = new InputData('viewMatrix', viewMatrix, Float32Array);
+    let transform = new InputData('transFormMatrix', transformMatrix)
+    let view = new InputData('viewMatrix', viewMatrix);
     traceProgram.draw([position, color, transform, view], (gl: WebGLRenderingContext) => {
-      gl.drawArrays(GLContext.LINE_LOOP, 0, trace.points.length)
+      gl.drawArrays(GLContext.LINE_LOOP, 0, trace.points.length / 4)
     })
   }
 
@@ -111,6 +110,7 @@ export function draw(gl: WebGLRenderingContext, options) {
       }
     }
   }
+
   function update() {
     timing++
 
@@ -128,24 +128,59 @@ export function draw(gl: WebGLRenderingContext, options) {
 
     gl.clear(GLContext.COLOR_BUFFER_BIT | GLContext.DEPTH_BUFFER_BIT);
 
-    let earth = new Sphere([0.0, 0.0, 0.0], options.earthR, options.w, options.h)
-    for (let i = 0, len = earth.points.length / 4; i < len; ++i) {
-      earth.colors.push(options.R, options.G, options.B, options.A)
-    }
-    drawEarth(mat4.clone(transMatrix), mat4.clone(viewMatrix), earth)
-    
+    let earth = cache.get('earth', JSON.stringify({
+      r: options.earthR,
+      w: options.w,
+      h: options.h
+    }), status => generateSphere([0.0, 0.0, 0.0], status.r, status.w, status.h))
+    let earthColors = cache.get('earthColor', JSON.stringify({
+      w: options.w,
+      h: options.h,
+      R: options.R,
+      G: options.G,
+      B: options.B,
+      A: options.A
+    }), status => {
+      let colors = new Float32Array(status.w * (status.h + 1) * 4)
+      for (let i = 0; i < colors.length / 4; ++i) {
+        colors[i * 4 + 0] = status.R
+        colors[i * 4 + 1] = status.G
+        colors[i * 4 + 2] = status.B
+        colors[i * 4 + 3] = status.A
+      }
+      return colors
+    })
+    drawEarth(mat4.clone(transMatrix), mat4.clone(viewMatrix), earth, earthColors)
+
     let earthLine = {
       points: earth.points,
-      indexes: generateSphereLine(options.w, options.h),
-      colors: new Array(earth.colors.length).fill(0.85)
+      indexes: cache.get('earthLineIndex', JSON.stringify({
+        w: options.w,
+        h: options.h
+      }), status => generateSphereLine(status.w, status.h)),
+      colors: Float32Array.from(new Array(earthColors.length).fill(0.85))
     }
     drawEarthLine(mat4.clone(transMatrix), mat4.clone(viewMatrix), earthLine)
-    
-    let moon = new Sphere([0.961, 0.0, 0.0], options.moonR, options.w, options.h)
-    for (let i = 0, len = moon.points.length / 4; i < len; ++i) {
-      moon.colors.push(0.7, 0.8, 0.85, 0.95)
-    }
-    drawMoon(mat4.clone(transMatrix), mat4.clone(viewMatrix), moon)
+
+    let moon = cache.get('moon', JSON.stringify({
+      r: options.moonR,
+      w: options.w,
+      h: options.h
+    }), status => generateSphere([0.961, 0.0, 0.0], status.r, status.w, status.h))
+    let moonColors = cache.get('moonColors', JSON.stringify({
+      w: options.w,
+      h: options.h,
+    }), status => {
+      let colors = new Float32Array(status.w * (status.h + 1) * 4)
+      for (let i = 0; i < colors.length / 4; ++i) {
+        colors[i * 4 + 0] = 0.7
+        colors[i * 4 + 1] = 0.8
+        colors[i * 4 + 2] = 0.85
+        colors[i * 4 + 3] = 0.95
+      }
+      return colors
+    })
+    drawMoon(mat4.clone(transMatrix), mat4.clone(viewMatrix), moon, moonColors)
     drawTrace(mat4.clone(transMatrix), mat4.clone(viewMatrix))
     window.requestAnimationFrame(update)
   }
@@ -154,7 +189,7 @@ export function draw(gl: WebGLRenderingContext, options) {
   // register mouse event
   gl.canvas.addEventListener('wheel', event => {
     options.scale = options.scale + event.deltaY * -0.01 * 0.20
-  })
+  }, { passive: true })
 
   let draggabel = false
   gl.canvas.addEventListener('mousemove', event => {
